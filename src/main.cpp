@@ -5,16 +5,12 @@
 #include "main.h"
 
 
-
-
 /**
 * Runs initialization code. This occurs as soon as the program is started.
 *
 * All other competition modes are blocked by initialize; it is recommended
 * to keep execution time for this mode under a few seconds.
 */
-
-
 
 
 // PID Sensors
@@ -27,8 +23,6 @@ lemlib::TrackingWheel horizontal_tracking_wheel(&h_tracker, lemlib::Omniwheel::N
 lemlib::TrackingWheel vertical_tracking_wheel(&v_tracker, lemlib::Omniwheel::NEW_2, 1.586);
 
 
-
-
 // Motors
 pros::MotorGroup left_motors({-1, -2, -3}, pros::MotorGearset::blue); // left motors on ports 1, 2, 3
 pros::MotorGroup right_motors({20, 19, 18}, pros::MotorGearset::blue); // right motors on ports 20, 19, 18
@@ -37,14 +31,10 @@ pros::MotorGroup firstStage({9, 10}, pros::MotorGearset::blue); // firststage mo
 pros::Motor hood(8, pros::MotorGearset::blue); // hood motor on port 8
 
 
-
-
 // Pistons
 pros::ADIDigitalOut littleWil('C', false); // piston on special port C
 pros::ADIDigitalOut Wing('B', false); // piston on special port B
 pros::ADIDigitalOut hoodPiston('A', false); // piston on special port A
-
-
 
 
 // Variables
@@ -52,11 +42,7 @@ bool littleWil_state = false; // tracks the state of the little wil piston
 bool Wing_state = false; // tracks the state of the Wing piston
 
 
-
-
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-
-
 
 
 // drivetrain settings
@@ -67,8 +53,6 @@ lemlib::Drivetrain drivetrain(&left_motors, // left motor group
                               450, // drivetrain rpm is 450
                               2 // horizontal drift is 2 (for now)
 );
-
-
 
 
 // lateral PID controller
@@ -85,8 +69,6 @@ lemlib::ControllerSettings linearController(
 );
 
 
-
-
 // angular PID controller
 lemlib::ControllerSettings angularController(
                            2.3, // proportional gain (kP)
@@ -101,8 +83,6 @@ lemlib::ControllerSettings angularController(
 );
 
 
-
-
 // sensors for odometry
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel (y-axis)
                             nullptr, // set to nullptr as we don't have a second vertical tracking wheel
@@ -112,12 +92,8 @@ lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel
 );
 
 
-
-
 // create the chassis
 lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors);
-
-
 
 
 void initialize() {
@@ -146,16 +122,12 @@ void initialize() {
 }
 
 
-
-
 /**
 * Runs while the robot is in the disabled state of Field Management System or
 * the VEX Competition Switch, following either autonomous or opcontrol. When
 * the robot is enabled, this task will exit.
 */
 void disabled() {}
-
-
 
 
 /**
@@ -168,8 +140,6 @@ void disabled() {}
 * starts.
 */
 void competition_initialize() {}
-
-
 
 
 /**
@@ -185,13 +155,9 @@ void competition_initialize() {}
 */
 
 
-
-
 void setLittleWil(bool state) {
     littleWil.set_value(state);
 }
-
-
 
 
 void setIntake(int speed) {
@@ -200,14 +166,10 @@ void setIntake(int speed) {
 }
 
 
-
-
 void holdIntake() {
     hoodPiston.set_value(true);
     intake.move_velocity(600);
 }
-
-
 
 
 void setWing(bool state) {
@@ -215,15 +177,11 @@ void setWing(bool state) {
 }
 
 
-
-
 void scoreMiddle() {
     hoodPiston.set_value(false); // Set the hood piston to close
     firstStage.move_velocity(600);
     hood.move_velocity(-200);
 }
-
-
 
 
 void auton_swap() {
@@ -247,59 +205,9 @@ void auton_swap() {
 }
 
 
-
-
 void auton_red_left() {
-    chassis.setPose(0, 0, 0);
-    chassis.moveToPose(0, 33, 0, 1200, {.forwards = true, .lead = 0}, false); //initial forward movement
-    chassis.turnToHeading(-90, 700);
-    setLittleWil(true);
-    holdIntake();
-    chassis.moveToPose(-8, 33, -90, 500, {.forwards = true, .lead = 0}, false);
-    chassis.swingToHeading(-100, DriveSide::LEFT, 100); //swings to -100 deg, (locks left side)
-    chassis.swingToHeading(-80, DriveSide::RIGHT, 100); //swings to -80 deg, (locks right side)
-    chassis.swingToHeading(-90, DriveSide::LEFT, 100); //swings to -90 deg, (locks left side)
-    chassis.moveToPose(-15, 33, -90, 500, {.forwards = true, .lead = 0, .maxSpeed = 100}, false);
-    pros::delay(150);
-    //matchload
-    chassis.moveToPoint(15, 33, 1000, {.forwards = false}, false);
-    setIntake(600);
-    chassis.moveToPoint(23, 33, 2000, {.forwards = false, .maxSpeed = 60}, true);
-    setIntake(-600);
-    pros::delay(100);
-    setIntake(600);
-    pros::delay(50);
-    setIntake(-600);
-    pros::delay(50);
-    setIntake(600);
-    pros::delay(1450);
-    pros::delay(300);
-    chassis.moveToPose(6, 33, 135, 1300, {.forwards = true, .lead = 0, .maxSpeed = 90}, false); //move out after scoring
-    setLittleWil(false);
-    //long goal score
-    holdIntake();
-    chassis.moveToPose(30.5, 7, 135, 1300, {.forwards = true, .lead = .5}, false);
-    chassis.turnToHeading(315, 800);
-    chassis.moveToPoint(43.5, -9.5, 1700, {.forwards = false, .maxSpeed = 40}, false);
-    setIntake(0); //temp
-    setIntake(-600);
-    pros::delay(100);
-    scoreMiddle();
-    pros::delay(100);
-    setIntake(-600);
-    pros::delay(100);
-    scoreMiddle();
-    pros::delay(1000);
-    //middlescore
-    chassis.moveToPoint(7, 21, 1700, {.forwards = true}, false);
-    chassis.moveToPose(19, 21, -90, 500, {.forwards = false, .lead = 0}, false); //move out after scoring
-    chassis.moveToPose(43, 21, -90, 1500, {.forwards = false, .lead = 0, .maxSpeed = 80}, false); //move out after scoring
-
-
-   
+      
 }
-
-
 
 
 void auton_red_right() {
@@ -370,51 +278,23 @@ void auton_red_right() {
 }
 
 
-
-
 void auton_blue_left() {
     chassis.setPose(0, 0, 0);
 }
 
 
-
-
 void auton_blue_right() {
-    chassis.setPose(0, 0, 0);
-    holdIntake();
-    chassis.moveToPose(-5, 20, 0, 1000, {.forwards = true, .lead = .4, .maxSpeed = 60}, false);
-    chassis.moveToPose(11, 39, 0, 2200, {.forwards = true, .lead = 0, .maxSpeed = 60}, false);
-    setLittleWil(true);
-    pros::delay(300);
-    setLittleWil(false);
-    setIntake(0);
-    chassis.moveToPose(35.5, 5, -180, 2200, {.forwards = false, .lead = 0, .maxSpeed = 100}, false);
-    setLittleWil(true);
-    chassis.moveToPoint(35.5, 30, 1500, {.forwards = false}, false);
-    setIntake(600);
-    pros::delay(3000);
-    setIntake(0);
-    chassis.moveToPoint(35.5, 10, 1500, {.forwards = true}, false);
-    setWing(true);
-    chassis.moveToPose(22, 42, 0, 2200, {.forwards = true, .maxSpeed = 80}, false);
+    
 }
 
 
-
-
 void autonomous() {
-    // chassis.setPose(0, 0, 0);
     auton_swap();
     // auton_red_left();
     // auton_red_right();
     //auton_blue_left();
     //auton_blue_right();
-    // chassis.moveToPoint(0, 40, 10000, {.forwards = true}, false);
-    // chassis.turnToHeading(90, 10000);
-
 }
-
-
 
 
 /**
@@ -458,8 +338,6 @@ void opcontrol() {
         }
 
 
-
-
         // Little Wil toggle logic
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
             littleWil_state = !littleWil_state;
@@ -467,15 +345,11 @@ void opcontrol() {
         }
 
 
-
-
         // Wing toggle logic
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
             Wing_state = !Wing_state;
             Wing.set_value(Wing_state); // Set the Wing piston to the new state
         }
-
-
 
 
         // Delay to save resources
