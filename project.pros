@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "RIGHTMAN",
+    "project_name": "MAIN",
     "target": "v5",
     "templates": {
       "LemLib": {
@@ -635,7 +635,8 @@
       }
     },
     "upload_options": {
-      "slot": 1
+      "slot": 1,
+      "icon": "alien"
     },
     "use_early_access": false
   }

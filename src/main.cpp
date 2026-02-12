@@ -42,7 +42,7 @@ pros::Motor hood(8, pros::MotorGearset::blue); // hood motor on port 8
 // Pistons
 pros::ADIDigitalOut littleWil('C', false); // piston on special port C
 pros::ADIDigitalOut Wing('B', false); // piston on special port B
-pros::ADIDigitalOut hoodPiston('A', true); // piston on special port A
+pros::ADIDigitalOut hoodPiston('A', false); // piston on special port A
 
 
 
@@ -73,15 +73,15 @@ lemlib::Drivetrain drivetrain(&left_motors, // left motor group
 
 // lateral PID controller
 lemlib::ControllerSettings linearController(
-                           15.5, // proportional gain (kP)
+                           6.5, // proportional gain (kP)
                            0.5, // integral gain (kI)
-                           77, // derivative gain (kD)
+                           10, // derivative gain (kD)
                            3, // anti windup
                            1, // small error range, in inches
                            100, // small error range timeout, in milliseconds
                            3, // large error range, in inches
                            500, // large error range timeout, in milliseconds
-                           0 // maximum acceleration (slew)
+                           20 // maximum acceleration (slew)
 );
 
 
@@ -89,9 +89,9 @@ lemlib::ControllerSettings linearController(
 
 // angular PID controller
 lemlib::ControllerSettings angularController(
-                           8, // proportional gain (kP)
+                           2.3, // proportional gain (kP)
                            0, // integral gain (kI)
-                           52, // derivative gain (kD)
+                           11.2, // derivative gain (kD)
                            3, // anti windup
                            1, // small error range, in degrees
                            100, // small error range timeout, in milliseconds
@@ -195,7 +195,7 @@ void setLittleWil(bool state) {
 
 
 void setIntake(int speed) {
-    hoodPiston.set_value(true);
+    hoodPiston.set_value(false);
     intake.move_velocity(speed);
 }
 
@@ -203,7 +203,7 @@ void setIntake(int speed) {
 
 
 void holdIntake() {
-    hoodPiston.set_value(false);
+    hoodPiston.set_value(true);
     intake.move_velocity(600);
 }
 
@@ -228,68 +228,18 @@ void scoreMiddle() {
 
 void auton_swap() {
     chassis.setPose(0, 0, 0);
-    chassis.moveToPose(0, 45, 0, 1500, {.forwards = true, .lead = 0}, false); //initial forward movement
-    chassis.turnToHeading(-90, 1200);
+    chassis.moveToPose(0, 50, 0, 2000, {.forwards = true, .lead = 0}, false); //initial forward movement
+    chassis.turnToHeading(90, 700);
     setLittleWil(true);
+    chassis.moveToPoint(10.5, 52, 3000, {.forwards = true}, false); //initial forward movement
     holdIntake();
-    chassis.moveToPose(-8, 45, -90, 500, {.forwards = true, .lead = 0}, false);
-    chassis.swingToHeading(-100, DriveSide::LEFT, 100); //swings to -100 deg, (locks left side)
-    chassis.swingToHeading(-80, DriveSide::RIGHT, 100); //swings to -80 deg, (locks right side)
-    chassis.swingToHeading(-90, DriveSide::LEFT, 100); //swings to -90 deg, (locks left side)
-    chassis.moveToPose(-15, 45, -90, 1000, {.forwards = true, .lead = 0, .maxSpeed = 100}, false);
-    pros::delay(350);
-    //matchload
-    chassis.moveToPoint(15, 47, 1000, {.forwards = false}, false);
+    pros::delay(1750);
+    chassis.moveToPoint(-17, 52, 2000, {.forwards = false}, false); //initial forward movement
     setIntake(600);
-    chassis.moveToPoint(23, 47, 2000, {.forwards = false, .maxSpeed = 60}, true);
-    setIntake(-600);
-    pros::delay(100);
-    setIntake(600);
-    pros::delay(1450);
-    pros::delay(300);
-    chassis.moveToPose(6, 47, 135, 1300, {.forwards = true, .lead = 0, .maxSpeed = 90}, false); //move out after scoring
-    setLittleWil(false);
-    //long goal score
-    holdIntake();
-    chassis.moveToPose(30, 22, 138, 1700, {.forwards = true, .lead = .5}, false);
-    chassis.turnToHeading(-45, 1500);
-    chassis.moveToPoint(42, 3, 1700, {.forwards = false, .maxSpeed = 60}, false);
-    setIntake(0); //temp
-    setIntake(-600);
-    pros::delay(100);
-    scoreMiddle();
-    pros::delay(100);
-    setIntake(-600);
-    pros::delay(100);
-    scoreMiddle();
-    pros::delay(1000);
-
-
-
-
-    //middle score
-    chassis.moveToPose(27, 16, -48, 1100, {.forwards = true, .lead = 0}, false);
-    chassis.turnToHeading(-180, 500);
-    chassis.moveToPose(28, -25, -180, 1500, {.forwards = true, .lead = .4}, false);
-    holdIntake();
-    //grab next blocks
-    chassis.moveToPoint(7, -51, 2500, {.forwards = true}, false);
-    chassis.turnToHeading(-90, 500);
-    chassis.moveToPoint(23, -51, 2000, {.forwards = false, .maxSpeed = 60}, false);
-    pros::delay(200);
     pros::delay(600);
-    setIntake(600);
-    pros::delay(100);
-    setIntake(-600);
+    setIntake(-200);
     pros::delay(100);
     setIntake(600);
-    pros::delay(1450);
-    pros::delay(1000);
-    setIntake(0);
-    holdIntake();
-
-
-    //long goal
 
 
 
@@ -453,11 +403,15 @@ void auton_blue_right() {
 
 
 void autonomous() {
-    // auton_swap();
+    // chassis.setPose(0, 0, 0);
+    auton_swap();
     // auton_red_left();
-    auton_red_right();
+    // auton_red_right();
     //auton_blue_left();
     //auton_blue_right();
+    // chassis.moveToPoint(0, 40, 10000, {.forwards = true}, false);
+    // chassis.turnToHeading(90, 10000);
+
 }
 
 
@@ -489,14 +443,13 @@ void opcontrol() {
 
         // Intake control logic
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            hoodPiston.set_value(false); // Set the hood piston to close
             intake.move_velocity(600);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-            hoodPiston.set_value(false); // Set the hood piston to close
             intake.move_velocity(600);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
             intake.move_velocity(-600);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
-            hoodPiston.set_value(false); // Set the hood piston to close
             firstStage.move_velocity(600);
             hood.move_velocity(-200);
         } else {
